@@ -5,12 +5,12 @@ from pyspark.ml.regression import LinearRegression
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 from pyspark.sql.functions import round
 from pyspark.ml.evaluation import RegressionEvaluator
-from pyspark.ml import Pipeline
-from pyspark.ml.tuning import ParamGridBuilder, CrossValidator, CrossValidatorModel
-
 
 spark = SparkSession.builder.appName("CloudComputing_MLlib").getOrCreate()
 df = spark.read.option("delimiter",';').csv('winequality-white.csv', inferSchema=True, header=True)
+
+features = df.columns
+X_feat = features.remove('quality')
 
 hasher = FeatureHasher(inputCols=[c for c in df.columns if c not in {'quality'}], outputCol="features")
 featurized = hasher.transform(df)
@@ -27,6 +27,7 @@ predictions = lrModel.transform(test)
 evaluator = RegressionEvaluator(labelCol="quality", predictionCol="prediction", metricName="r2")
 r_square = evaluator.evaluate(predictions)
 print(" R^2 on test data for LINEAR REGRESSION = {}".format(r_square))
+
 
 predictionAndLabels=predictions.withColumn("prediction", round(predictions["prediction"]).cast(DoubleType())).select("prediction", "quality")
 predictionAndLabels.show(10)
